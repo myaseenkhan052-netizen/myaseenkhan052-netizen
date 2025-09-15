@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+ 
+    
+
+
+
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teachable Machine Audio</title>
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: Arial, sans-serif;">
+
+  <h2>Teachable Machine Audio Model</h2>
+  <button id="startBtn">Start</button>
+  <div id="label-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+  <script>
+    const URL = "https://teachablemachine.withgoogle.com/models/wIGJyEeg8/";
+    let recognizer;
+    let listening = false;
+
+    // Load model
+    async function createModel() {
+      const checkpointURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+
+      const recognizer = speechCommands.create(
+        "BROWSER_FFT",
+        undefined,
+        checkpointURL,
+        metadataURL
+      );
+
+      await recognizer.ensureModelLoaded();
+      return recognizer;
+    }
+
+    // Initialize model and labels
+    async function init() {
+      recognizer = await createModel();
+      const classLabels = recognizer.wordLabels();
+      const labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
+      for (let i = 0; i < classLabels.length; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    // Start/Stop listening
+    async function toggleListen() {
+      if (!recognizer) {
+        await init();
+      }
+
+      const button = document.getElementById("startBtn");
+
+      if (!listening) {
+        recognizer.listen(result => {
+          const scores = result.scores;
+          const classLabels = recognizer.wordLabels();
+          const labelContainer = document.getElementById("label-container");
+
+          for (let i = 0; i < classLabels.length; i++) {
+            const classPrediction = `${classLabels[i]}: ${scores[i].toFixed(2)}`;
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+          }
+        }, {
+          probabilityThreshold: 0.5,
+          overlapFactor: 0.5
+        });
+
+        listening = true;
+        button.innerText = "Stop";
+      } else {
+        recognizer.stopListening();
+        listening = false;
+        button.innerText = "Start";
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", toggleListen);
+  </script>
+</body>
+</html>
+
+</body>
+</html>
